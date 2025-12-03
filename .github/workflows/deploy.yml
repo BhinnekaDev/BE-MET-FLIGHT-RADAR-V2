@@ -5,13 +5,26 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Deploy to existing container
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Docker image
+        run: docker build -t be-met-flight-radar:latest .
+
+      - name: Deploy to Coolify server via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.COOLIFY_HOST }}
@@ -19,8 +32,12 @@ jobs:
           key: ${{ secrets.COOLIFY_KEY }}
           port: 22
           script: |
-            # Stop container lama
-            docker stop qggowsks8kco8sw044cwcgk4-123847730442 || true
-            docker rm qggowsks8kco8sw044cwcgk4-123847730442 || true
-            # Jalankan ulang container dengan image yang sama
-            docker run -d --name qggowsks8kco8sw044cwcgk4-123847730442 -p 3001:3001 qggowsks8kco8sw044cwcgk4:c03c8531a0384be54ba958d9c81bfc6bf1dbefb9
+            # Stop & remove old container
+            docker stop be-met-flight-radar || true
+            docker rm be-met-flight-radar || true
+            # Run new container
+            docker run -d \
+              --name be-met-flight-radar \
+              -p 3001:3001 \
+              -v /usr/src/app/persistent:/usr/src/app/persistent \
+              be-met-flight-radar:latest
