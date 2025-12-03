@@ -1,4 +1,4 @@
-name: CI/CD Coolify Deploy
+name: CI/CD Full Deploy
 
 on:
   push:
@@ -7,15 +7,57 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Coolify Manual GitHub Webhook
-        uses: fjogeleit/http-request-action@v1
-        with:
-          url: http://103.13.206.62:8000/webhooks/source/github/events/manual
-          method: POST
-          contentType: application/json
-          customHeaders: '{"X-Coolify-Secret":"BhinnekaDev24."}'
-          data: '{"branch":"main"}'
 
-      - name: Confirm deployment trigger
-        run: echo "✅ Coolify deploy webhook triggered successfully!"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy & Build Docker on server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.COOLIFY_HOST }}
+          username: ${{ secrets.COOLIFY_USER }}
+          key: ${{ secrets.COOLIFY_KEY }}
+          port: 22
+          script: |
+            # ===== CONFIG =====
+            PROJECT_DIR="$HOME/met-flight-radar"
+            CONTAINER_NAME="met-flight-radar"
+            IMAGE_NAME="met-flight-radar:latest"
+            PERSISTENT_DIR="$PROJECT_DIR/persistent"
+            APP_PORT=3001
+
+            echo "==> Ensure project directory exists"
+            mkdir -p $PROJECT_DIR
+            mkdir -p $PERSISTENT_DIR
+            cd $PROJECT_DIR || exit 1
+
+            echo "==> Pull latest code from GitHub"
+            if [ ! -d ".git" ]; then
+              git clone --depth 1 https://github.com/BhinnekaDev/BE-MET-FLIGHT-RADAR-V2.git .
+            else
+              git fetch --all
+              git reset --hard origin/main
+              git clean -fd
+            fi
+
+            echo "==> Build Docker image on server"
+            docker build -t $IMAGE_NAME .
+
+            echo "==> Stop old container if exists"
+            if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+              docker stop $CONTAINER_NAME
+            fi
+            if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
+              docker rm $CONTAINER_NAME
+            fi
+
+            echo "==> Start new container"
+            docker run -d \
+              --name $CONTAINER_NAME \
+              -p $APP_PORT:$APP_PORT \
+              -v $PERSISTENT_DIR:/usr/src/app/persistent \
+              --restart unless-stopped \
+              $IMAGE_NAME
+
+            echo "✅ Deployment complete!"
