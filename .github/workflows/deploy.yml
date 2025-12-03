@@ -14,6 +14,11 @@ jobs:
           url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
           method: POST
           customHeaders: "{\"X-Coolify-Secret\":\"${{ secrets.COOLIFY_WEBHOOK_SECRET }}\"}"
+          contentType: "application/json"
+          body: |
+            {
+              "branch": "main"
+            }
 
       - name: Confirm deployment trigger
         run: echo "✅ Coolify deploy webhook triggered successfully!"
