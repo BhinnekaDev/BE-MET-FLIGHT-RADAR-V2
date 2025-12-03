@@ -14,7 +14,7 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  app.use('/openapi.json', (req, res) => res.json(document));
+  app.use('/openapi.json', (_req, res) => res.json(document));
 
   app.use(
     '/docs',
@@ -24,6 +24,9 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(3000);
+  const port = process.env.PORT!;
+  await app.listen(port);
+
+  console.log(`Server running on port ${port}`);
 }
 bootstrap();
