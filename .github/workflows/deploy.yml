@@ -11,11 +11,11 @@ jobs:
       - name: Trigger Coolify Webhook
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          url: http://103.13.206.62:8000/webhooks/source/github/events/manual
           method: POST
-          contentType: "application/json"
-          customHeaders: "{\"X-Coolify-Secret\":\"${{ secrets.COOLIFY_WEBHOOK_SECRET }}\"}"
-          data: '{"branch": "main"}'
+          contentType: application/json
+          customHeaders: '{"X-Coolify-Secret":"BhinnekaDev24."}'
+          data: '{"branch":"main"}'
 
       - name: Confirm deployment trigger
         run: echo "✅ Coolify deploy webhook triggered successfully!"
