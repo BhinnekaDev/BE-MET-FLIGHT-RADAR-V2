@@ -1,1 +1,0 @@
-mas carles ganteng
