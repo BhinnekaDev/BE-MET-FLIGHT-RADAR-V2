@@ -1,0 +1,36 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install deps & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Docker image
+        run: docker build -t my-app:latest .
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.COOLIFY_HOST }}
+          username: ${{ secrets.COOLIFY_USER }}
+          key: ${{ secrets.COOLIFY_KEY }}
+          script: |
+            docker stop my-app || true
+            docker rm my-app || true
+            docker run -d --name my-app -p 3001:3001 my-app:latest
