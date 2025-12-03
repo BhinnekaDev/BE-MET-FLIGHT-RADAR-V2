@@ -1,4 +1,4 @@
-name: CI/CD Full Deploy
+name: Trigger Coolify Deploy
 
 on:
   push:
@@ -7,25 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Trigger Coolify Deployment
-        uses: appleboy/ssh-action@v0.1.7
+      - name: Trigger Coolify Webhook
+        uses: fjogeleit/http-request-action@v1
         with:
-          host: ${{ secrets.COOLIFY_HOST }}
-          username: ${{ secrets.COOLIFY_USER }}
-          key: ${{ secrets.COOLIFY_KEY }}
-          port: 22
-          script: |
-            # Login ke Coolify CLI (kalau perlu)
-            export COOLIFY_TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-
-            # Masuk ke project dan deploy
-            cd ~/coolify-projects/BE-MET-FLIGHT-RADAR-V2 || exit 1
-            echo "==> Triggering Coolify deploy"
-            coolify deploy --app BE-MET-FLIGHT-RADAR-V2 --branch main
-
-            echo "✅ Deployment triggered via Coolify!"
+          url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          method: POST
