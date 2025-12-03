@@ -21,7 +21,7 @@ jobs:
           port: 22
           script: |
             # ===== CONFIG =====
-            PROJECT_DIR="/usr/src/app/met-flight-radar"
+            PROJECT_DIR="$HOME/met-flight-radar"
             CONTAINER_NAME="qggowsks8kco8sw044cwcgk4-134337423910"
             IMAGE_NAME="qggowsks8kco8sw044cwcgk4:latest"
             PERSISTENT_DIR="$PROJECT_DIR/persistent"
@@ -30,12 +30,18 @@ jobs:
             echo "==> Ensure project directory exists"
             mkdir -p $PROJECT_DIR
             mkdir -p $PERSISTENT_DIR
-            cd $PROJECT_DIR
 
             echo "==> Pull latest code from GitHub"
-            git fetch --all
-            git reset --hard origin/main
-            git clean -fd
+            if [ ! -d "$PROJECT_DIR/.git" ]; then
+              git clone --depth 1 https://github.com/BhinnekaDev/BE-MET-FLIGHT-RADAR-V2.git $PROJECT_DIR
+            else
+              cd $PROJECT_DIR
+              git fetch --all
+              git reset --hard origin/main
+              git clean -fd
+            fi
+
+            cd $PROJECT_DIR
 
             echo "==> Build Docker image on server"
             docker build -t $IMAGE_NAME .
