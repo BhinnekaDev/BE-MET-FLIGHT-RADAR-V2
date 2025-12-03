@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,10 +16,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies & build
+      - name: Install dependencies & build (local)
         run: |
           npm ci
           npm run build
+
+      - name: Build Docker image
+        run: |
+          docker build -t qggowsks8kco8sw044cwcgk4:latest .
 
       - name: Deploy Docker container on Coolify server
         uses: appleboy/ssh-action@v0.1.7
@@ -30,13 +34,13 @@ jobs:
           port: 22
           script: |
             CONTAINER_NAME="qggowsks8kco8sw044cwcgk4-131055414007"
-            IMAGE_NAME="qggowsks8kco8sw044cwcgk4:93a6a8d8231a2504cb7d1908233c2a60707ace18"
+            IMAGE_NAME="qggowsks8kco8sw044cwcgk4:latest"
 
             echo "Stopping old container..."
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
 
-            echo "Starting new container..."
+            echo "Starting new container with latest build..."
             docker run -d \
               --name $CONTAINER_NAME \
               -p 3001:3001 \
