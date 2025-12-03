@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,9 +21,6 @@ jobs:
           npm ci
           npm run build
 
-      - name: Build Docker image
-        run: docker build -t be-met-flight-radar:latest .
-
       - name: Deploy Docker container on Coolify server
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -32,8 +29,8 @@ jobs:
           key: ${{ secrets.COOLIFY_KEY }}
           port: 22
           script: |
-            CONTAINER_NAME="qggowsks8kco8sw044cwcgk4-123847730442"
-            IMAGE_NAME="be-met-flight-radar:latest"
+            CONTAINER_NAME="qggowsks8kco8sw044cwcgk4-131055414007"
+            IMAGE_NAME="qggowsks8kco8sw044cwcgk4:93a6a8d8231a2504cb7d1908233c2a60707ace18"
 
             echo "Stopping old container..."
             docker stop $CONTAINER_NAME || true
