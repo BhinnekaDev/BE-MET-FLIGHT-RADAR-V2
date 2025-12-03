@@ -1,4 +1,4 @@
-name: Trigger Coolify Deploy
+name: CI/CD Coolify Deploy
 
 on:
   push:
@@ -7,9 +7,15 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Trigger Coolify Webhook
         uses: fjogeleit/http-request-action@v1
         with:
           url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
           method: POST
+          headers: |
+            X-Coolify-Secret: ${{ secrets.COOLIFY_WEBHOOK_SECRET }}
+
+      - name: Confirm deployment trigger
+        run: echo "✅ Coolify deploy webhook triggered successfully!"
