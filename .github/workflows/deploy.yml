@@ -8,14 +8,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Coolify Deploy Webhook
+      - name: Trigger Coolify Manual GitHub Webhook
         uses: fjogeleit/http-request-action@v1
         with:
-          url: http://103.13.206.62:8000/api/v1/deploy?uuid=qggowsks8kco8sw044cwcgk4&force=false
+          url: http://103.13.206.62:8000/webhooks/source/github/events/manual
           method: POST
           contentType: application/json
           customHeaders: '{"X-Coolify-Secret":"BhinnekaDev24."}'
-          data: '{}' 
+          data: '{"branch":"main"}'
 
       - name: Confirm deployment trigger
         run: echo "✅ Coolify deploy webhook triggered successfully!"
