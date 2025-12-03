@@ -9,9 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Deploy & Build Docker on server
+      - name: Deploy & Build Docker on Server
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.COOLIFY_HOST }}
@@ -19,31 +20,34 @@ jobs:
           key: ${{ secrets.COOLIFY_KEY }}
           port: 22
           script: |
+            # ----- CONFIG -----
             PROJECT_DIR="/usr/src/app/met-flight-radar"
             CONTAINER_NAME="qggowsks8kco8sw044cwcgk4-131055414007"
-            IMAGE_NAME="qggowsks8kco8sw044cwcgk4:latest"
+            IMAGE_NAME="met-flight-radar:latest"
 
-            echo "Create project dir if not exists..."
+            echo "==> Ensure project directory exists"
             mkdir -p $PROJECT_DIR
             cd $PROJECT_DIR
 
-            echo "Pull latest code from repository..."
-            git reset --hard
+            echo "==> Pull latest code"
+            git fetch --all
+            git reset --hard origin/main
             git clean -fd
-            git pull origin main
 
-            echo "Building Docker image on server..."
+            echo "==> Build Docker image on server"
             docker build -t $IMAGE_NAME .
 
-            echo "Stopping old container if exists..."
-            docker stop $CONTAINER_NAME || true
-            docker rm $CONTAINER_NAME || true
+            echo "==> Stop and remove old container if exists"
+            if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+              docker stop $CONTAINER_NAME
+              docker rm $CONTAINER_NAME
+            fi
 
-            echo "Starting new container..."
+            echo "==> Start new container"
             docker run -d \
               --name $CONTAINER_NAME \
               -p 3001:3001 \
               -v $PROJECT_DIR/persistent:/usr/src/app/persistent \
               $IMAGE_NAME
 
-            echo "Deployment complete!"
+            echo "✅ Deployment complete!"
