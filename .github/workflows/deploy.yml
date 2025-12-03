@@ -1,17 +1,30 @@
-name: CI/CD Restart Existing Container
+name: CI/CD Full Deploy
 
 on:
   push:
-    branches: [ main ]  
+    branches: [ main ]
 
 jobs:
-  restart:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Restart existing Coolify container
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies & build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Docker image
+        run: docker build -t be-met-flight-radar:latest .
+
+      - name: Deploy Docker container on Coolify server
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.COOLIFY_HOST }}
@@ -20,16 +33,17 @@ jobs:
           port: 22
           script: |
             CONTAINER_NAME="qggowsks8kco8sw044cwcgk4-123847730442"
-            IMAGE_NAME="qggowsks8kco8sw044cwcgk4:c03c8531a0384be54ba958d9c81bfc6bf1dbefb9"
+            IMAGE_NAME="be-met-flight-radar:latest"
 
-            echo "Stopping container if exists..."
+            echo "Stopping old container..."
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
 
-            echo "Starting container..."
+            echo "Starting new container..."
             docker run -d \
               --name $CONTAINER_NAME \
               -p 3001:3001 \
+              -v /usr/src/app/persistent:/usr/src/app/persistent \
               $IMAGE_NAME
 
-            echo "Container restarted successfully."
+            echo "Deployment complete!"
