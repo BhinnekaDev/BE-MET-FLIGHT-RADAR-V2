@@ -7,14 +7,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Trigger Coolify Webhook
         uses: fjogeleit/http-request-action@v1
         with:
           url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
           method: POST
-          headers: |
+          customHeaders: |
             X-Coolify-Secret: ${{ secrets.COOLIFY_WEBHOOK_SECRET }}
 
       - name: Confirm deployment trigger
